@@ -1,0 +1,5 @@
+
+> kubectl apply -f ui-deploy.yaml 
+
+
+>   kubectl get pod -o wide

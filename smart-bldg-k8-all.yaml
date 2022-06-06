@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smart-bldg-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smart-bldg-service
+  template:
+    metadata:
+      labels:
+        app: smart-bldg-service
+    spec:
+      containers:
+      - name: smart-bldg-service
+        image: aimlexperimentregistry.azurecr.io/k1st-smartbuilding-api:latest
+        ports:
+        - containerPort: 6379
+          name: smart-bldg-api
+      imagePullSecrets:
+      - name: regcred         
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smart-bldg-service
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: smart-bldg-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smart-bldg-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smart-bldg-ui
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5 
+  template:
+    metadata:
+      labels:
+        app: smart-bldg-ui
+    spec:
+      containers:
+      - name:  smart-bldg-ui
+        image: aimlexperimentregistry.azurecr.io/k1st-smartbuilding-ui:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+          limits:
+            cpu: 500m
+        env:
+        - name: REDIS
+          value: "azure-vote-back"
+      imagePullSecrets:
+      - name: regcred        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smart-bldg-ui
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+  selector:
+    app: smart-bldg-ui
